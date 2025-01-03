@@ -35,7 +35,6 @@ CREATE TABLE "Date" (
     "createdAt" TIMESTAMP DEFAULT NOW(),
     "updatedAt" TIMESTAMP DEFAULT NOW()
 );
-DROP TABLE IF EXISTS "Date";
 
 CREATE TABLE IF NOT EXISTS "DateOffice" (
     "officeId" INTEGER NOT NULL REFERENCES "Office" (id),
@@ -54,7 +53,7 @@ CREATE TABLE IF NOT EXISTS "AccountQuestion" (
     "updatedAt" TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY ("accountId", "questionId")
 );
-DROP TABLE IF EXISTS "DateOffice";
+
 
 CREATE TABLE IF NOT EXISTS "AccountOffice" (
    "accountId" INTEGER NOT NULL REFERENCES "Account" (id),
