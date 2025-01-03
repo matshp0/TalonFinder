@@ -1,0 +1,29 @@
+{
+  "name": "talon_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db_pull": "sequelize-auto -h localhost -d TalonBot -u postgres -x admin -p 5432 --dialect postgres -o database -l esm --case-prop c\n",
+    "format": "eslint \"**/*.js\" --fix",
+    "run": "node app.js"
+
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
+    "eslint": "^9.17.0",
+    "pg": "^8.13.1",
+    "pg-hstore": "^2.3.4",
+    "prisma": "^6.0.1",
+    "sequelize": "^6.37.5",
+    "sequelize-auto": "^0.8.8",
+    "telegraf": "^4.16.3",
+    "undici": "^7.1.0"
+  }
+}
