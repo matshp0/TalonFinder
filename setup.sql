@@ -22,24 +22,25 @@ CREATE TABLE IF NOT EXISTS "apiDB"."Office" (
     "updatedAt" TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS "apiDB"."Date" (
+  "dateValue" DATE PRIMARY KEY,
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "updatedAt" TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS "apiDB"."AccountOffice" (
-   "accountId" INTEGER NOT NULL REFERENCES "Account" (id),
-   "officeId" INTEGER NOT NULL REFERENCES "Office" (id),
+   "accountId" INTEGER NOT NULL REFERENCES "apiDB"."Account" (id),
+   "officeId" INTEGER NOT NULL REFERENCES "apiDB"."Office" (id),
    "createdAt" TIMESTAMP DEFAULT NOW(),
    "updatedAt" TIMESTAMP DEFAULT NOW(),
    PRIMARY KEY ("accountId", "officeId")
 );
 
-CREATE TABLE IF NOT EXISTS "apiDB"."Date" (
-    "dateValue" DATE PRIMARY KEY,
-    "createdAt" TIMESTAMP DEFAULT NOW(),
-    "updatedAt" TIMESTAMP DEFAULT NOW()
-);
 
 CREATE TABLE IF NOT EXISTS "apiDB"."DateOffice" (
-    "officeId" INTEGER NOT NULL REFERENCES "Office" (id),
+    "officeId" INTEGER NOT NULL REFERENCES "apiDB"."Office" (id),
     "date" DATE NOT NULL,
-    "questionId" INTEGER NOT NULL REFERENCES "Question" (id),
+    "questionId" INTEGER NOT NULL REFERENCES "apiDB"."Question" (id),
     "status" SMALLINT,
     "createdAt" TIMESTAMP DEFAULT NOW(),
     "updatedAt" TIMESTAMP DEFAULT NOW(),
@@ -47,8 +48,8 @@ CREATE TABLE IF NOT EXISTS "apiDB"."DateOffice" (
 );
 
 CREATE TABLE IF NOT EXISTS "apiDB"."AccountQuestion" (
-    "questionId" INTEGER NOT NULL REFERENCES "Question" (id),
-    "accountId" INTEGER NOT NULL REFERENCES "Account" (id),
+    "questionId" INTEGER NOT NULL REFERENCES "apiDB"."Question" (id),
+    "accountId" INTEGER NOT NULL REFERENCES "apiDB"."Account" (id),
     "createdAt" TIMESTAMP DEFAULT NOW(),
     "updatedAt" TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY ("accountId", "questionId")
