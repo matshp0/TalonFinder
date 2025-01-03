@@ -72,6 +72,10 @@ DO $$
             END LOOP;
     END $$;
 
+INSERT INTO "Question" ("id")
+VALUES ('56');
+INSERT INTO "Question" ("id")
+VALUES ('55');
 
 INSERT INTO "Account" ("id")
 VALUES ('725433593');
