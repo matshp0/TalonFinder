@@ -5,6 +5,7 @@ CREATE TYPE user_role AS ENUM ('admin', 'user');
 
 CREATE TABLE IF NOT EXISTS "apiDB"."Account" (
   "id" INTEGER PRIMARY KEY,
+  "role" user_role NOT NULL DEFAULT 'user',
   "createdAt" TIMESTAMP DEFAULT NOW(),
   "updatedAt" TIMESTAMP DEFAULT NOW()
 );
