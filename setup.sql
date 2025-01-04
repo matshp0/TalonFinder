@@ -56,10 +56,9 @@ CREATE TABLE IF NOT EXISTS "apiDB"."AccountQuestion" (
 );
 
 
-
 DO $$
     BEGIN
-        FOR i IN 151..200 LOOP
+        FOR i IN 0..200 LOOP
                 INSERT INTO "apiDB"."Office" ("id", "status", "createdAt", "updatedAt")
                 VALUES (i, 4, NOW(), NOW());
             END LOOP;
