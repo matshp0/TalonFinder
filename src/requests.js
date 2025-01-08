@@ -9,7 +9,7 @@ export async function getStepmap(chdate, questionId) {
     'method': 'GET'
   });
   if (statusCode >= 200 && statusCode < 300) {
-    return await body.text();
+    return await body.json();
   } else {
     if (statusCode === 302) {
       throw new RedirectException('302 Status code received');
