@@ -8,6 +8,10 @@ export default class Question extends Model {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true
+      },
+      category: {
+        type: DataTypes.STRING(255),
+        allowNull: true
       }
     }, {
       sequelize,

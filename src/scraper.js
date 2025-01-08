@@ -65,7 +65,7 @@ class Scraper {
         } catch (err) {
           if (err instanceof RedirectException) {
             console.log('Redirect detected, skipping');
-            process.exit(0);
+            await sleep(10000);
           } else {
             const errTimeout = process.env.ERROR_TIMEOUT;
             console.log(err.message);

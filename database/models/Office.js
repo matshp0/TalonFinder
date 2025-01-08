@@ -9,8 +9,8 @@ export default class Office extends Model {
         allowNull: false,
         primaryKey: true
       },
-      status: {
-        type: DataTypes.SMALLINT,
+      address: {
+        type: DataTypes.STRING(255),
         allowNull: true
       }
     }, {

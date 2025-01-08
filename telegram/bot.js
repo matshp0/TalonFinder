@@ -1,22 +1,27 @@
 import { Telegraf } from 'telegraf';
-import { message } from 'telegraf/filters';
-import { startHandler, onOfficeAdd } from './handlers.js';
+import { startHandler, onOfficeAdd, onCategoryAdd } from './handlers.js';
 import models from '../database/models.js';
 
-const { Account, AccountOffice, AccountQuestion } = models;
+const { Account,
+  AccountOffice,
+  AccountQuestion,
+  Office,
+  Question, } = models;
 
 export default class NotifierBot extends Telegraf {
   constructor(botToken) {
     super(botToken);
     this.start(startHandler);
     this.command('add_office', onOfficeAdd);
-    this.command('add_category', onOfficeAdd);
+    this.command('add_category', onCategoryAdd);
   }
 
   async #newTalonNotify(data) {
     const { officeId, date, questionId } = data;
     console.log('Notifying', data);
-    const accounts = await Account.findAll({
+    const officeQuery = Office.findByPk(officeId);
+    const questionQuery = Question.findByPk(questionId);
+    const accountsQuery = Account.findAll({
       include: [
         {
           model: AccountOffice,
@@ -32,8 +37,11 @@ export default class NotifierBot extends Telegraf {
         },
       ],
     });
+    const [office, accounts, question] = await Promise.all([officeQuery, accountsQuery, questionQuery]);
+    const { address } = office.dataValues;
+    const { category } = question.dataValues;
     const messages = accounts.map(({ dataValues }) => this.telegram.sendMessage(dataValues.id,
-      `New talon available for office ${officeId} on ${date} for category ${questionId}`));
+      `✨ Новий талон знайдено за адресою 📍 "${address}" на 📅 ${date} на категорію 🏷️ "${category}" 🎉`));
     return Promise.allSettled(messages);
   }
 

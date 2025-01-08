@@ -1,4 +1,7 @@
 import dotenv from 'dotenv';
 
-dotenv.config({ path: '.env' });
-
+try {
+  dotenv.config({ path: '.env' });
+} catch (e) {
+  console.log(e);
+}
