@@ -1,5 +1,10 @@
 import { Telegraf } from 'telegraf';
-import { startHandler, onOfficeAdd, onCategoryAdd } from './handlers.js';
+import { startHandler,
+  onOfficeAdd,
+  onCategoryAdd,
+  onOffices,
+  onCategories,
+} from './handlers.js';
 import models from '../database/models.js';
 
 const { Account,
@@ -14,6 +19,8 @@ export default class NotifierBot extends Telegraf {
     this.start(startHandler);
     this.command('add_office', onOfficeAdd);
     this.command('add_category', onCategoryAdd);
+    this.command('offices', onOffices);
+    this.command('categories', onCategories);
   }
 
   async #newTalonNotify(data) {

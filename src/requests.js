@@ -9,9 +9,12 @@ export async function getStepmap(chdate, questionId) {
     'method': 'GET'
   });
   if (statusCode >= 200 && statusCode < 300) {
-    return await body.json();
+    return await body.text();
   } else {
-    throw new Error(`Failed to fetch stepmap. HTTP statusCode: ${statusCode}`);
+    if (statusCode === 302) {
+      throw new RedirectException('302 Status code received');
+    }
+    throw new Error(`Failed to fetch available dates. HTTP statusCode: ${statusCode}`);
   }
 }
 

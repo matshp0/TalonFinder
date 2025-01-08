@@ -8,19 +8,19 @@ const { Account,
 
 export async function startHandler(ctx) {
   const { id } = ctx.from;
-  const [record, created] = await Account.findOrCreate({
+  ctx.reply(`🤖 Цей бот допоможе вам отримати сповіщення про доступні талони на обрані вами ТСЦ МВС. \n
+  📋 Доступні команди: \n
+  ➕ /add_office - додати офіс для сповіщення \n
+  ➕ /add_category - додати категорію для сповіщення \n
+  🏢 /offices - список доступних офісів \n
+  📂 /categories - список доступних категорій`);
+  await Account.findOrCreate({
     where: { id },
     defaults: {
       id,
       role: 'user'
     }
   });
-
-  if (created) {
-    console.log('A new record was created:', record);
-  } else {
-    console.log('Record already exists:', record);
-  }
 }
 
 export async function onOfficeAdd(ctx) {
@@ -59,3 +59,16 @@ export async function onCategoryAdd(ctx) {
   await Promise.allSettled(records);
 }
 
+export async function onOffices(ctx) {
+  const query = await Office.findAll();
+  const offices = query.map(({ dataValues }) => dataValues);
+  const message = offices.map(({ id, address }) => `${id}: ${address}`).join('\n');
+  ctx.reply('🏢 Доступні офіси: \n' + message);
+}
+
+export async function onCategories(ctx) {
+  const query = await Question.findAll();
+  const categories = query.map(({ dataValues }) => dataValues);
+  const message = categories.map(({ id, category }) => `${id}: ${category}`).join('\n');
+  ctx.reply('🏷️ Доступні категорії: \n' + message);
+}
