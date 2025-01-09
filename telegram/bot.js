@@ -5,22 +5,27 @@ import { startHandler,
   onOffices,
   onCategories,
 } from './handlers.js';
+import { isAdmin } from './middlewares.js';
 import models from '../database/models.js';
 
 const { Account,
   AccountOffice,
   AccountQuestion,
   Office,
-  Question, } = models;
+  Question,
+  Cookie,
+} = models;
 
 export default class NotifierBot extends Telegraf {
   constructor(botToken) {
     super(botToken);
+    this.startScraper = null;
     this.start(startHandler);
     this.command('add_office', onOfficeAdd);
     this.command('add_category', onCategoryAdd);
     this.command('offices', onOffices);
     this.command('categories', onCategories);
+    this.command('set_cookie', isAdmin, this.#onCookieSet.bind(this));
   }
 
   async #newTalonNotify(data) {
@@ -50,6 +55,14 @@ export default class NotifierBot extends Telegraf {
     const messages = accounts.map(({ dataValues }) => this.telegram.sendMessage(dataValues.id,
       `✨ Новий талон знайдено за адресою 📍 "${address}" на 📅 ${date} на категорію 🏷️ "${category}" 🎉`));
     return Promise.allSettled(messages);
+  }
+
+  async #onCookieSet(ctx) {
+    const query = await Cookie.update({ value: ctx.payload }, { where: { id: 1 } });
+    if (query) {
+      ctx.reply('🍪 Cookie was successfully updated!');
+      this.startScraper();
+    }
   }
 
   async #errorNotify(err) {

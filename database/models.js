@@ -6,6 +6,7 @@ import { Sequelize } from 'sequelize';
 import _DateOffice from './models/DateOffice.js';
 import _Question from './models/Question.js';
 import _AccountQuestion from './models/AccountQuestion.js';
+import _Cookie from './models/Cookie.js';
 
 const { DataTypes } = _sequelize;
 
@@ -13,6 +14,7 @@ function initModels(sequelize) {
   const Account = _Account.init(sequelize, DataTypes);
   const AccountOffice = _AccountOffice.init(sequelize, DataTypes);
   const AccountQuestion = _AccountQuestion.init(sequelize, DataTypes);
+  const Cookie = _Cookie.init(sequelize, DataTypes);
   const DateOffice = _DateOffice.init(sequelize, DataTypes);
   const Office = _Office.init(sequelize, DataTypes);
   const Question = _Question.init(sequelize, DataTypes);
@@ -40,6 +42,7 @@ function initModels(sequelize) {
     Account,
     AccountOffice,
     AccountQuestion,
+    Cookie,
     DateOffice,
     Office,
     Question,

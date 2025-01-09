@@ -4,7 +4,9 @@ import Office from '../database/models/Office.js';
 const { Account,
   AccountOffice,
   AccountQuestion,
-  Question } = models;
+  Question,
+  Cookie,
+} = models;
 
 export async function startHandler(ctx) {
   const { id } = ctx.from;
@@ -72,3 +74,5 @@ export async function onCategories(ctx) {
   const message = categories.map(({ id, category }) => `${id}: ${category}`).join('\n');
   ctx.reply('🏷️ Доступні категорії: \n' + message);
 }
+
+

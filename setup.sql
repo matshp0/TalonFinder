@@ -57,7 +57,12 @@ CREATE TABLE IF NOT EXISTS "apiDB"."AccountQuestion" (
     PRIMARY KEY ("accountId", "questionId")
 );
 
+CREATE TABLE "apiDB"."Cookie" (
+  id SERIAL PRIMARY KEY,
+  value TEXT
+);
 
+INSERT INTO "apiDB"."Cookie" (value) VALUES ('cookie');
 
 INSERT INTO "apiDB"."Question" ("id")
 VALUES ('56');
@@ -66,7 +71,6 @@ VALUES ('55');
 
 UPDATE "apiDB"."Question" SET "category" = 'Практичний іспит на категорію В (транспортний засіб сервісного центру з механічною коробкою передач)' WHERE "id" = 55;
 UPDATE "apiDB"."Question" SET "category" = 'Практичний іспит на категорію В (транспортний засіб автошколи з механічною коробкою передач)' WHERE "id" = 56;
-
 
 INSERT INTO "apiDB"."Office" (id, "createdAt", "updatedAt", address) VALUES (9, '2024-12-23 20:17:25.591024', '2025-01-06 16:14:46.757000', 'Луцький р-н, с. Струмівка, вул. Рівненська, 74');
 INSERT INTO "apiDB"."Office" (id, "createdAt", "updatedAt", address) VALUES (112, '2024-12-23 20:17:25.591024', '2025-01-06 16:14:46.757000', 'Чортківський район, с. Угринь, вул. Обїзна, 1');
@@ -135,4 +139,3 @@ INSERT INTO "apiDB"."Office" (id, "createdAt", "updatedAt", address) VALUES (27,
 INSERT INTO "apiDB"."Office" (id, "createdAt", "updatedAt", address) VALUES (182, '2025-01-01 20:19:38.125050', '2025-01-06 16:14:46.755000', 'м. Київ, вул. Перемоги, 20');
 INSERT INTO "apiDB"."Office" (id, "createdAt", "updatedAt", address) VALUES (107, '2024-12-23 20:17:25.591024', '2025-01-06 16:14:46.756000', 'м.Суми, вул. Білопільський шлях, 18/1');
 INSERT INTO "apiDB"."Office" (id, "createdAt", "updatedAt", address) VALUES (120, '2024-12-23 20:17:25.591024', '2025-01-06 16:14:46.756000', 'Станція метро "Київська". При перебуванні на станції Вам необхідно дотримуватись правил користування Харківським метрополітеном');
-

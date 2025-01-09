@@ -2,7 +2,8 @@ import { request } from 'undici';
 import { headers } from './config.js';
 import { RedirectException } from './exceptions.js';
 
-export async function getStepmap(chdate, questionId) {
+export async function getStepmap(chdate, questionId, cookie) {
+  headers.cookie = cookie;
   const { statusCode, body } = await request(`https://eq.hsc.gov.ua/site/stepmap?chdate=${chdate}&question_id=${questionId}`, {
     headers,
     'body': null,
@@ -18,7 +19,8 @@ export async function getStepmap(chdate, questionId) {
   }
 }
 
-export async function getAvailableDates(questionId) {
+export async function getAvailableDates(questionId, cookie) {
+  headers.cookie = cookie;
   const { statusCode, body } = await request(`https://eq.hsc.gov.ua/site/step1?value=${questionId}`, {
     headers,
     'body': null,

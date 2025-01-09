@@ -8,6 +8,7 @@ const scraper = new Scraper();
 
 scraper.onAvailable = tgBot.newTalonNotify;
 scraper.onRedirect = tgBot.errorNotify;
+tgBot.startScraper = scraper.start;
 
 tgBot.launch();
 scraper.start();

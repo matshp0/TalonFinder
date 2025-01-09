@@ -5,20 +5,23 @@ import models from '../database/models.js';
 import { OFFICE_STATUS } from './config.js';
 import { RedirectException } from './exceptions.js';
 
-const { Question, DateOffice } = models;
+const { Question, DateOffice, Cookie } = models;
 
 class Scraper {
   constructor() {
     this.questionIds = [];
     this.onAvailable = null;
     this.onRedirect = null;
+    this.isRunning = false;
   }
 
   async #scrape(questionId) {
-    const html = await getAvailableDates(questionId);
+    const cookiesQuery = (await Cookie.findByPk(1));
+    const cookie = cookiesQuery.toJSON().value;
+    const html = await getAvailableDates(questionId, cookie);
     const availableDates = parseDates(html);
     for (const date of availableDates) {
-      const stepmap = await getStepmap(date, questionId);
+      const stepmap = await getStepmap(date, questionId, cookie);
       const notifyArr = stepmap.map(async ({ id_offices: officeId, sts }) => {
         const condition = { officeId, date, questionId };
         const isAvailable = await this.#updateStatus(condition, sts);
@@ -57,7 +60,8 @@ class Scraper {
     return changedStatus;
   }
 
-  async start() {
+  async #start() {
+    this.isRunning = true;
     while (true) {
       await this.#setQuestionIds();
       for (const questionId of this.questionIds) {
@@ -67,6 +71,7 @@ class Scraper {
           if (err instanceof RedirectException) {
             console.log('Redirect detected, notifying admins');
             await this.onRedirect(err);
+            this.isRunning = false;
             return;
           } else {
             const errTimeout = parseInt(process.env.ERROR_TIMEOUT, 10) || 1000;
@@ -76,6 +81,17 @@ class Scraper {
         }
       }
     }
+  }
+
+  #restart() {
+    if (this.isRunning) {
+      return;
+    }
+    this.#start();
+  }
+
+  get start() {
+    return this.#restart.bind(this);
   }
 }
 
