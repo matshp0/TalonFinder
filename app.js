@@ -7,6 +7,7 @@ const tgBot = new NotifierBot(process.env.BOT_TOKEN);
 const scraper = new Scraper();
 
 scraper.onAvailable = tgBot.newTalonNotify;
+scraper.onRedirect = tgBot.errorNotify;
 
 tgBot.launch();
 scraper.start();

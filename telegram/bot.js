@@ -52,8 +52,20 @@ export default class NotifierBot extends Telegraf {
     return Promise.allSettled(messages);
   }
 
+  async #errorNotify(err) {
+    const accounts = await Account.findAll({
+      where: { role: 'admin' }
+    });
+    const chatIds = accounts.map(({ dataValues }) => dataValues.id);
+    chatIds.forEach((id) => this.telegram.sendMessage(id, `🚨 Помилка: ${err.message}`));
+  }
+
   get newTalonNotify() {
     return this.#newTalonNotify.bind(this);
+  }
+
+  get errorNotify() {
+    return this.#errorNotify.bind(this);
   }
 }
 

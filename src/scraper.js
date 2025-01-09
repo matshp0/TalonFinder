@@ -11,6 +11,7 @@ class Scraper {
   constructor() {
     this.questionIds = [];
     this.onAvailable = null;
+    this.onRedirect = null;
   }
 
   async #scrape(questionId) {
@@ -64,21 +65,17 @@ class Scraper {
           await this.#scrape(questionId);
         } catch (err) {
           if (err instanceof RedirectException) {
-            console.log('Redirect detected, skipping');
-            await sleep(10000);
+            console.log('Redirect detected, notifying admins');
+            await this.onRedirect(err);
+            return;
           } else {
-            const errTimeout = process.env.ERROR_TIMEOUT;
-            console.log(err.message);
+            const errTimeout = parseInt(process.env.ERROR_TIMEOUT, 10) || 1000;
             console.error(`Error: ${err.message}. Retrying in ${errTimeout}ms`);
             await sleep(errTimeout);
           }
         }
       }
     }
-  }
-
-  async triggerOnAvailable(data) {
-    await this.onAvailable(data);
   }
 }
 
