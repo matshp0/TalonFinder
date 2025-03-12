@@ -13,7 +13,7 @@ export async function getAvailableDates(questionId, officeId, cookie) {
   if (statusCode >= 200 && statusCode < 300) {
     return await body.json();
   } else {
-    if (statusCode === 302) {
+    if (statusCode === 440) {
       throw new RedirectException('302 Status code received');
     }
     throw new Error(`Failed to fetch available dates. HTTP statusCode: ${statusCode}`);
