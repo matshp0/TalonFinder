@@ -1,85 +1,90 @@
-import { getStepmap, getAvailableDates } from './requests.js';
-import parseDates from '../utils/parseDates.js';
+import { getAvailableDates, getAvailableOffices } from './requests.js';
 import sleep from '../utils/sleep.js';
 import models from '../database/models.js';
-import { OFFICE_STATUS } from './config.js';
-import { RedirectException } from './exceptions.js';
+import { OFFICE_STATUSES } from './config.js';
+import { ExpiredException } from './exceptions.js';
 
-const { Question, DateOffice, Cookie } = models;
+const { Question, DateOffice, Cookie, Office } = models;
 
 class Scraper {
   constructor() {
-    this.questionIds = [];
     this.onAvailable = null;
-    this.onRedirect = null;
+    this.onSessionExpire = null;
     this.isRunning = false;
   }
 
   async #scrape(questionId) {
-    const cookiesQuery = (await Cookie.findByPk(1));
-    const cookie = cookiesQuery.toJSON().value;
-    const html = await getAvailableDates(questionId, cookie);
-    const availableDates = parseDates(html);
-    for (const date of availableDates) {
-      const stepmap = await getStepmap(date, questionId, cookie);
-      const notifyArr = stepmap.map(async ({ id_offices: officeId, sts }) => {
-        const condition = { officeId, date, questionId };
-        const isAvailable = await this.#updateStatus(condition, sts);
-        if (isAvailable && this.onAvailable) {
-          this.onAvailable(condition);
-        }
-      });
-      const settled = Promise.allSettled(notifyArr);
-      await Promise.all([sleep(process.env.REQUEST_TIMEOUT), settled]);
-    }
+    const cookie = await this.#getCookie();
+    const { data } = await getAvailableDates(questionId);
+    const dates = data.map(({ date }) => date.slice(0, 10));
+    const update = dates.map(async (date) => {
+      await sleep(1000);
+      return getAvailableOffices(questionId, date, cookie)
+        .then((res) => res.map(({ srvCenterId }) => srvCenterId))
+        .then((officeIds) => this.#updateStatus(questionId, officeIds, date));
+    });
+    await Promise.all(update);
   };
 
-  #isAvailable(status) {
-    return status === OFFICE_STATUS.available ||
-      status === OFFICE_STATUS.availableOnSite;
+  async #getCookie() {
+    const { value } = (await Cookie.findByPk(1)).dataValues;
+    return value;
   }
 
-  async #setQuestionIds() {
-    const query = await Question.findAll();
-    this.questionIds = query.map(({ dataValues }) => dataValues.id);
+  async #getQuestionIds() {
+    const questions = await Question.findAll({ attributes: ['id'] });
+    return questions.map(({ dataValues }) => dataValues.id);
   }
 
-  async #updateStatus(conditions, status) {
-    const record = await DateOffice.findOne({
-      where: conditions
-    });
-    let changedStatus = this.#isAvailable(status);
-    if (record) {
-      if (this.#isAvailable(record.status)) {
-        changedStatus = false;
+  async #getOffices() {
+    const questions = await Office.findAll({ attributes: ['id'] });
+    return questions.map(({ dataValues }) => dataValues.id);
+  }
+
+  async #updateStatus(questionId, officeIds, date) {
+    const allOffices = await this.#getOffices();
+    const available = OFFICE_STATUSES.AVAILABLE;
+    const unavailable = OFFICE_STATUSES.UNAVAILABLE;
+    const update = allOffices.map(async (officeId) => {
+      const options = {
+        officeId, questionId, date
+      };
+      const currentStatus = officeIds.includes(officeId) ? available : unavailable;
+      const query = await DateOffice.findOne({
+        where: options
+      }) ?? await DateOffice.create({ ...options, status: unavailable });
+      const record = query.dataValues;
+      if (record.status === unavailable && currentStatus === available) {
+        await query.update({ status: available });
+        this.onAvailable(options);
       }
-      await record.update({ status });
-    } else {
-      await DateOffice.create({ ...conditions, status });
-    }
-    return changedStatus;
+    });
+    await Promise.all(update);
   }
 
   async #start() {
     this.isRunning = true;
+    const questionIds = await this.#getQuestionIds();
     while (true) {
-      await this.#setQuestionIds();
-      for (const questionId of this.questionIds) {
+      const search = questionIds.map(async (questionId) => {
         try {
           await this.#scrape(questionId);
         } catch (err) {
-          if (err instanceof RedirectException) {
-            console.log('Redirect detected, notifying admins');
-            await this.onRedirect(err);
-            this.isRunning = false;
-            return;
-          } else {
-            const errTimeout = parseInt(process.env.ERROR_TIMEOUT, 10) || 1000;
-            console.error(`Error: ${err.message}. Retrying in ${errTimeout}ms`);
-            await sleep(errTimeout);
-          }
+          if (err instanceof ExpiredException) throw err;
+          throw new Error(`QuestionId: ${questionId}, ${err.message}`);
+        }
+      });
+      const result = await Promise.allSettled(search);
+      for (const { reason } of result) {
+        if (!reason) continue;
+        console.error(reason);
+        if (reason instanceof ExpiredException) {
+          await this.onSessionExpire(reason);
+          this.isRunning = false;
+          return;
         }
       }
+      await sleep(process.env.REQUEST_TIMEOUT);
     }
   }
 

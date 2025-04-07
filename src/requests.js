@@ -1,37 +1,31 @@
 import { request } from 'undici';
 import { headers } from './config.js';
-import { RedirectException } from './exceptions.js';
+import { ExpiredException } from './exceptions.js';
 
-export async function getStepmap(chdate, questionId, cookie) {
-  headers.cookie = cookie;
-  const { statusCode, body } = await request(`https://eq.hsc.gov.ua/site/stepmap?chdate=${chdate}&question_id=${questionId}`, {
+export async function getAvailableDates(categoryId) {
+  const { statusCode, body } = await request(`https://eqn.hsc.gov.ua/api/v2/days?startDate=[&endDate=s&serviceId=${categoryId}`, {
     headers,
     'body': null,
     'method': 'GET'
   });
   if (statusCode >= 200 && statusCode < 300) {
-    return await body.json();
+    return body.json();
   } else {
-    if (statusCode === 302) {
-      throw new RedirectException('302 Status code received');
-    }
     throw new Error(`Failed to fetch available dates. HTTP statusCode: ${statusCode}`);
   }
 }
 
-export async function getAvailableDates(questionId, cookie) {
-  headers.cookie = cookie;
-  const { statusCode, body } = await request(`https://eq.hsc.gov.ua/site/step1?value=${questionId}`, {
+export async function getAvailableOffices(categoryId, date, cookie) {
+  headers['cookie'] = cookie;
+  const { statusCode, body } = await request(`https://eqn.hsc.gov.ua/api/v2/departments?serviceId=${categoryId}&date=${date}`, {
     headers,
     'body': null,
     'method': 'GET'
   });
+  if (statusCode === 440) throw new ExpiredException('Session has expired');
   if (statusCode >= 200 && statusCode < 300) {
-    return await body.text();
+    return body.json();
   } else {
-    if (statusCode === 302) {
-      throw new RedirectException('302 Status code received');
-    }
-    throw new Error(`Failed to fetch available dates. HTTP statusCode: ${statusCode}`);
+    throw new Error(`Failed to fetch available offices. HTTP statusCode: ${statusCode}, for date: ${date}`);
   }
 }
