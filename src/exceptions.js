@@ -1,6 +1,6 @@
-export class RedirectException extends Error {
+export class ExpiredException extends Error {
   constructor(message) {
     super(message);
-    this.name = 'RedirectException';
+    this.name = 'ExpiredException';
   }
 }
