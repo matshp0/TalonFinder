@@ -9,7 +9,7 @@ const { Question, DateOffice, Cookie, Office } = models;
 class Scraper {
   constructor() {
     this.onAvailable = null;
-    this.onSessionExpire = null;
+    this.adminNotify = null;
     this.isRunning = false;
   }
 
@@ -69,6 +69,7 @@ class Scraper {
   async #start() {
     this.isRunning = true;
     const questionIds = await this.#getQuestionIds();
+    this.adminNotify('🟢 Bot has successfully started');
     while (true) {
       const search = questionIds.map(async (questionId) => {
         try {
@@ -85,8 +86,11 @@ class Scraper {
         if (reason instanceof ExpiredException) {
           let cookie = '';
           while (!cookie) {
-            cookie = await getLogInCookie(this.onSessionExpire)
-              .catch((err) => console.log(`Error during resolving cookie: ${err.message}`));
+            try {
+              cookie = await getLogInCookie(this.adminNotify);
+            } catch (err) {
+              console.log(`Error during resolving cookie: ${err}`);
+            }
           }
           await this.#setCookie(cookie);
           this.isRunning = false;
