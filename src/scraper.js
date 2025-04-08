@@ -17,12 +17,9 @@ class Scraper {
     const cookie = await this.#getCookie();
     const { data } = await getAvailableDates(questionId);
     const dates = data.map(({ date }) => date.slice(0, 10));
-    const update = dates.map(async (date) => {
-      await sleep(1000);
-      return getAvailableOffices(questionId, date, cookie)
-        .then((res) => res.map(({ srvCenterId }) => srvCenterId))
-        .then((officeIds) => this.#updateStatus(questionId, officeIds, date));
-    });
+    const update = dates.map(async (date) => getAvailableOffices(questionId, date, cookie)
+      .then((res) => res.map(({ srvCenterId }) => srvCenterId))
+      .then((officeIds) => this.#updateStatus(questionId, officeIds, date)));
     await Promise.all(update);
   };
 
@@ -102,11 +99,11 @@ class Scraper {
     }
   }
 
-  #restart() {
+  async #restart() {
     if (this.isRunning) {
       return;
     }
-    this.#start();
+    return this.#start();
   }
 
   get start() {

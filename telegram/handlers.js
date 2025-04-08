@@ -65,7 +65,7 @@ export async function onOffices(ctx) {
   const query = await Office.findAll();
   const offices = query.map(({ dataValues }) => dataValues);
   const message = offices.map(({ id, address }) => `${id}: ${address}`).join('\n');
-  ctx.reply('🏢 Доступні офіси: \n' + message);
+  ctx.reply('🏢 Доступні офіси: \n');
 }
 
 export async function onCategories(ctx) {
