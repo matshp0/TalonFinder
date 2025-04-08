@@ -49,7 +49,7 @@ const wsConnectApi = async (url, notify) => new Promise((resolve, reject) => {
     const { data } = event;
     const json = JSON.parse(data);
     if (json['a'] === 'qr') {
-      notify(json.data);
+      notify(`⚠️Session expired \n ℹ️Login url: \n${json.data}`);
     }
     if (json['a'] === 'redirect') {
       resolve(json['redirectUrl']);
