@@ -65,12 +65,12 @@ export default class NotifierBot extends Telegraf {
     }
   }
 
-  async #errorNotify(err) {
+  async #errorNotify(url) {
     const accounts = await Account.findAll({
       where: { role: 'admin' }
     });
     const chatIds = accounts.map(({ dataValues }) => dataValues.id);
-    chatIds.forEach((id) => this.telegram.sendMessage(id, `🚨 Помилка: ${err.message}`));
+    chatIds.forEach((id) => this.telegram.sendMessage(id, `🚨 Помилка: Session Expired \n Login url: ${url}`));
   }
 
   get newTalonNotify() {
