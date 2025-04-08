@@ -1,4 +1,4 @@
-import { getAvailableDates, getAvailableOffices } from './requests.js';
+import { getAvailableDates, getAvailableOffices, getLogInCookie } from './requests.js';
 import sleep from '../utils/sleep.js';
 import models from '../database/models.js';
 import { OFFICE_STATUSES } from './config.js';
@@ -41,6 +41,10 @@ class Scraper {
     return questions.map(({ dataValues }) => dataValues.id);
   }
 
+  async #setCookie(cookie) {
+    return Cookie.update({ value: cookie }, { where: { id: 1 } });
+  }
+
   async #updateStatus(questionId, officeIds, date) {
     const allOffices = await this.#getOffices();
     const available = OFFICE_STATUSES.AVAILABLE;
@@ -79,8 +83,14 @@ class Scraper {
         if (!reason) continue;
         console.error(reason);
         if (reason instanceof ExpiredException) {
-          await this.onSessionExpire(reason);
+          let cookie = '';
+          while (!cookie) {
+            cookie = await getLogInCookie(this.onSessionExpire)
+              .catch((err) => console.log(`Error during resolving cookie: ${err.message}`));
+          }
+          await this.#setCookie(cookie);
           this.isRunning = false;
+          this.#restart();
           return;
         }
       }
