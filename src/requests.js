@@ -41,9 +41,13 @@ const wsConnectApi = async (url, notify) => new Promise((resolve, reject) => {
     'clientId': searchParams.get('client_id'),
     'state': searchParams.get('state'),
   };
+  const ping = (ws) => ws.send(JSON.stringify({ 'c': 'ping' }));
+  let pingInterval = null;
   const ws = new WebSocket('wss://api.monobank.ua/wss/');
   ws.addEventListener('open', () => {
     ws.send(JSON.stringify(reqObj));
+    ping(ws);
+    pingInterval = setInterval(() => ping(ws));
   });
   ws.addEventListener('message', (event) => {
     const { data } = event;
@@ -53,13 +57,16 @@ const wsConnectApi = async (url, notify) => new Promise((resolve, reject) => {
     }
     if (json['a'] === 'redirect') {
       resolve(json['redirectUrl']);
+      clearInterval(pingInterval);
       ws.close();
     }
   });
   ws.addEventListener('close', () => {
+    clearInterval(pingInterval);
     reject();
   });
   ws.addEventListener('error', (error) => {
+    clearInterval(pingInterval);
     reject(error);
   });
 });
@@ -67,7 +74,10 @@ const wsConnectApi = async (url, notify) => new Promise((resolve, reject) => {
 
 export async function getLogInCookie(notify) {
   const fetchCookie = makeFetchCookie(fetch);
-  await fetchCookie('https://id.gov.ua/?response_type=code&client_id=80c51b9c14a442af5a3c3c0f64acaa0f&state=1231231231&redirect_uri=https://eqn.hsc.gov.ua/openid/auth/govid');
+  await fetchCookie('https://eqn.hsc.gov.ua/api/v2/oauth/govid', {
+    method: 'GET',
+    redirect: 'follow',
+  });
   await fetchCookie('https://id.gov.ua/bankid-nbu-auth');
   const formData = new FormData();
   formData.append('selBankConnect', 'monobank');
