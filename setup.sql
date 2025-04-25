@@ -1,5 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS "apiDB";
 
+SELECT * FROM "apiDB"."Cookie";
 
 CREATE TYPE user_role AS ENUM ('admin', 'user');
 

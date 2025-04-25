@@ -92,43 +92,49 @@ const wsConnectApi = async (url, notify) => new Promise((resolve, reject) => {
 
 
 export async function getLogInCookie(notify) {
-  const fetchCookie = makeFetchCookie(fetch);
-  await fetchCookie('https://eqn.hsc.gov.ua/api/v2/oauth/govid', {
-    method: 'GET',
-    redirect: 'follow',
-  });
-  await fetchCookie('https://id.gov.ua/bankid-nbu-auth');
-  const formData = new FormData();
-  formData.append('selBankConnect', 'monobank');
-  const res1 = await fetchCookie('https://id.gov.ua/bankid-auth-request', {
-    method: 'POST',
-    redirect: 'manual',
-    body: formData,
-  });
-  const location = res1.headers.get('location');
-  const res2 = await fetchCookie(location, {
-    method: 'GET',
-    redirect: 'manual',
-  });
-  const finalLocation = res2.headers.get('location');
-  const url = new URL(finalLocation);
-  const redirectUri = await wsConnectApi(url, notify);
-  const res4 = await fetchCookie(redirectUri, {
-    method: 'GET',
-    redirect: 'follow',
-  });
-  const html = await res4.text();
-  const csrfToken = extractCsrfToken(html);
-  const formData2 = new FormData();
-  formData2.append('cfsr_token', csrfToken);
-  formData2.append('is_passport', '0');
-  formData2.append('is_edrpou', '0');
-  formData2.append('is_birthday', '0');
-  await fetchCookie('https://id.gov.ua/senduserdata', {
-    method: 'POST',
-    redirect: 'follow',
-    body: formData2,
-  });
-  return fetchCookie.cookieJar.getCookieString('https://eqn.hsc.gov.ua');
+  while (true) {
+    try {
+      const fetchCookie = makeFetchCookie(fetch);
+      await fetchCookie('https://eqn.hsc.gov.ua/api/v2/oauth/govid', {
+        method: 'GET',
+        redirect: 'follow',
+      });
+      await fetchCookie('https://id.gov.ua/bankid-nbu-auth');
+      const formData = new FormData();
+      formData.append('selBankConnect', 'monobank');
+      const res1 = await fetchCookie('https://id.gov.ua/bankid-auth-request', {
+        method: 'POST',
+        redirect: 'manual',
+        body: formData,
+      });
+      const location = res1.headers.get('location');
+      const res2 = await fetchCookie(location, {
+        method: 'GET',
+        redirect: 'manual',
+      });
+      const finalLocation = res2.headers.get('location');
+      const url = new URL(finalLocation);
+      const redirectUri = await wsConnectApi(url, notify);
+      const res4 = await fetchCookie(redirectUri, {
+        method: 'GET',
+        redirect: 'follow',
+      });
+      const html = await res4.text();
+      const csrfToken = extractCsrfToken(html);
+      const formData2 = new FormData();
+      formData2.append('cfsr_token', csrfToken);
+      formData2.append('is_passport', '0');
+      formData2.append('is_edrpou', '0');
+      formData2.append('is_birthday', '0');
+      await fetchCookie('https://id.gov.ua/senduserdata', {
+        method: 'POST',
+        redirect: 'follow',
+        body: formData2,
+      });
+      return fetchCookie.cookieJar.getCookieString('https://eqn.hsc.gov.ua');
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }
 

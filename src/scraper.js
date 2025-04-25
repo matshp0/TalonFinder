@@ -20,8 +20,14 @@ class Scraper {
     const update = dates.map(async (date) => getAvailableOffices(questionId, date, cookie)
       .then((res) => res.map(({ srvCenterId }) => srvCenterId))
       .then((officeIds) => this.#updateStatus(questionId, officeIds, date))
-      .then(() => console.log(`Fetched data successfuly for date: ${date}`)));
-    await Promise.allSettled(update);
+      .then(() => console.log(`Fetched data successfuly for date: ${date}`))
+      .catch((err) => {
+        console.log(err);
+        if (err instanceof ExpiredException) {
+          throw err;
+        }
+      }));
+    return Promise.all(update);
   };
 
   async #getCookie() {
@@ -66,49 +72,25 @@ class Scraper {
 
   async #start() {
     this.isRunning = true;
-    const questionIds = await this.#getQuestionIds();
     this.adminNotify('🟢 Bot has successfully started');
-    while (true) {
-      const search = [49].map(async (questionId) => {
-        try {
-          await this.#scrape(questionId);
-        } catch (err) {
-          if (err instanceof ExpiredException) throw err;
-          throw new Error(`QuestionId: ${questionId}, ${err.message}`);
-        }
-      });
-      const result = await Promise.allSettled(search);
-      for (const { reason } of result) {
-        if (!reason) continue;
-        console.error(reason);
-        if (reason instanceof ExpiredException) {
-          let cookie = '';
-          while (!cookie) {
-            try {
-              cookie = await getLogInCookie(this.adminNotify);
-            } catch (err) {
-              console.log(`Error during resolving cookie: ${err}`);
-            }
-          }
-          await this.#setCookie(cookie);
-          this.isRunning = false;
-          this.#restart();
-          return;
-        }
-      }
-      await sleep(process.env.REQUEST_TIMEOUT);
-    }
-  }
+    console.log('bot started');
 
-  async #restart() {
-    if (this.isRunning) {
-      return;
+
+    while (true) {
+      const questionIds = [49];
+      const settledArr = questionIds.map(async (questionId) => this.#scrape(questionId));
+
+      try {
+        await Promise.all(settledArr);
+      } catch {
+        const cookie = await getLogInCookie(this.adminNotify);
+        await this.#setCookie(cookie);
+      }
     }
-    return this.#start();
   }
 
   get start() {
-    return this.#restart.bind(this);
+    return this.#start.bind(this);
   }
 }
 

@@ -5,7 +5,6 @@ import { startHandler,
   onOffices,
   onCategories,
 } from './handlers.js';
-import { isAdmin } from './middlewares.js';
 import models from '../database/models.js';
 
 const { Account,
@@ -25,7 +24,6 @@ export default class NotifierBot extends Telegraf {
     this.command('add_category', onCategoryAdd);
     this.command('offices', onOffices);
     this.command('categories', onCategories);
-    this.command('set_cookie', isAdmin, this.#onCookieSet.bind(this));
   }
 
   async #newTalonNotify(data) {
