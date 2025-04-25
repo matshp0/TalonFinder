@@ -20,8 +20,7 @@ class Scraper {
     const update = dates.map(async (date) => getAvailableOffices(questionId, date, cookie)
       .then((res) => res.map(({ srvCenterId }) => srvCenterId))
       .then((officeIds) => this.#updateStatus(questionId, officeIds, date))
-      .then(() => console.log(`Fetched data successfuly for date: ${date}`))
-      .catch((err) => console.log(err)));
+      .then(() => console.log(`Fetched data successfuly for date: ${date}`)));
     await Promise.allSettled(update);
   };
 
