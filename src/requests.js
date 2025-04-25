@@ -4,8 +4,26 @@ import { ExpiredException } from './exceptions.js';
 import makeFetchCookie from 'fetch-cookie';
 import { WebSocket } from 'undici';
 import { extractCsrfToken } from '../utils/extractCsrfToken.js';
+import { AsyncQueue } from '../utils/AsyncQueue.js';
+
+
+const fetchQueue = new AsyncQueue();
+fetchQueue.minTimeout = parseInt(process.env.MIN_QUEUE_TIMEOUT) || 1000;
+fetchQueue.maxTimeout = parseInt(process.env.MAX_QUEUE_TIMEOUT) || 2000;
+fetchQueue.onErrorTimeout = parseInt(process.env.ON_ERROR_QUEUE_TIMEOUT) || 10000;
+fetchQueue.batchSize = parseInt(process.env.BATCH_SIZE) || 1;
 
 export async function getAvailableDates(categoryId) {
+  const task = fetchAvailableDates.bind(null, categoryId);
+  return fetchQueue.process(task);
+}
+
+export async function getAvailableOffices(categoryId, date, cookie) {
+  const task = fetchAvailableOffices.bind(null, categoryId, date, cookie);
+  return fetchQueue.process(task);
+}
+
+async function fetchAvailableDates(categoryId) {
   const { statusCode, body } = await request(`https://eqn.hsc.gov.ua/api/v2/days?startDate=[&endDate=s&serviceId=${categoryId}`, {
     headers,
     'body': null,
@@ -18,7 +36,8 @@ export async function getAvailableDates(categoryId) {
   }
 }
 
-export async function getAvailableOffices(categoryId, date, cookie) {
+
+async function fetchAvailableOffices(categoryId, date, cookie) {
   headers['cookie'] = cookie;
   const { statusCode, body } = await request(`https://eqn.hsc.gov.ua/api/v2/departments?serviceId=${categoryId}&date=${date}`, {
     headers,

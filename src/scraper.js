@@ -19,8 +19,10 @@ class Scraper {
     const dates = data.map(({ date }) => date.slice(0, 10));
     const update = dates.map(async (date) => getAvailableOffices(questionId, date, cookie)
       .then((res) => res.map(({ srvCenterId }) => srvCenterId))
-      .then((officeIds) => this.#updateStatus(questionId, officeIds, date)));
-    await Promise.all(update);
+      .then((officeIds) => this.#updateStatus(questionId, officeIds, date))
+      .then(() => console.log(`Fetched data successfuly for date: ${date}`))
+      .catch((err) => console.log(err)));
+    await Promise.allSettled(update);
   };
 
   async #getCookie() {
@@ -68,7 +70,7 @@ class Scraper {
     const questionIds = await this.#getQuestionIds();
     this.adminNotify('🟢 Bot has successfully started');
     while (true) {
-      const search = questionIds.map(async (questionId) => {
+      const search = [49].map(async (questionId) => {
         try {
           await this.#scrape(questionId);
         } catch (err) {
