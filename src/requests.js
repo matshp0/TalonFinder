@@ -1,10 +1,10 @@
-import { request } from 'undici';
 import { headers } from './config.js';
 import { ExpiredException } from './exceptions.js';
 import makeFetchCookie from 'fetch-cookie';
 import { WebSocket } from 'undici';
 import { extractCsrfToken } from '../utils/extractCsrfToken.js';
 import { AsyncQueue } from '../utils/AsyncQueue.js';
+import sleep from '../utils/sleep.js';
 
 
 const fetchQueue = new AsyncQueue();
@@ -13,42 +13,66 @@ fetchQueue.maxTimeout = parseInt(process.env.MAX_QUEUE_TIMEOUT) || 2000;
 fetchQueue.onErrorTimeout = parseInt(process.env.ON_ERROR_QUEUE_TIMEOUT) || 10000;
 fetchQueue.batchSize = parseInt(process.env.BATCH_SIZE) || 1;
 
+
+let fetchCookie = makeFetchCookie(fetch);
+
+async function streamToJson(stream) {
+  const decoder = new TextDecoder('utf-8');
+  let text = '';
+
+  for await (const chunk of stream) {
+    text += decoder.decode(chunk, { stream: true });
+  }
+
+  text += decoder.decode();
+
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error('Failed to parse JSON: ' + err.message);
+  }
+}
+
 export async function getAvailableDates(categoryId) {
   const task = fetchAvailableDates.bind(null, categoryId);
   return fetchQueue.process(task);
 }
 
-export async function getAvailableOffices(categoryId, date, cookie) {
-  const task = fetchAvailableOffices.bind(null, categoryId, date, cookie);
+export async function getAvailableOffices(categoryId, date, officeId, cookie) {
+  const task = fetchIfAvailable.bind(null, categoryId, date, officeId, cookie);
   return fetchQueue.process(task);
 }
 
 async function fetchAvailableDates(categoryId) {
-  const { statusCode, body } = await request(`https://eqn.hsc.gov.ua/api/v2/days?startDate=[&endDate=s&serviceId=${categoryId}`, {
+  const { status, body } = await fetchCookie(`https://eqn.hsc.gov.ua/api/v2/days?startDate=[&endDate=s&serviceId=${categoryId}`, {
     headers,
     'body': null,
     'method': 'GET'
+  }).catch((err) => {
+    console.log(err);
   });
-  if (statusCode >= 200 && statusCode < 300) {
-    return body.json();
+  console.log(status);
+  if (status >= 200 && status < 300) {
+    return streamToJson(body);
   } else {
-    throw new Error(`Failed to fetch available dates. HTTP statusCode: ${statusCode}`);
+    throw new Error(`Failed to fetch available dates. HTTP statusCode: ${body}`);
   }
 }
 
 
-async function fetchAvailableOffices(categoryId, date, cookie) {
+async function fetchIfAvailable(categoryId, date, officeId, cookie) {
   headers['cookie'] = cookie;
-  const { statusCode, body } = await request(`https://eqn.hsc.gov.ua/api/v2/departments?serviceId=${categoryId}&date=${date}`, {
+  const { status, body } = await fetchCookie(`https://eqn.hsc.gov.ua/api/v2/departments/${officeId}/services/${categoryId}/slots?date=${date}&page=1&pageSize=24`, {
     headers,
     'body': null,
     'method': 'GET'
   });
-  if (statusCode === 440) throw new ExpiredException('Session has expired');
-  if (statusCode >= 200 && statusCode < 300) {
-    return body.json();
+  console.log(status);
+  if (status === 440) throw new ExpiredException('Session has expired');
+  if (status >= 200 && status < 300) {
+    return streamToJson(body);
   } else {
-    throw new Error(`Failed to fetch available offices. HTTP statusCode: ${statusCode}, for date: ${date}`);
+    throw new Error(`Failed to fetch available offices. HTTP statusCode: ${status}, for date: ${date}`);
   }
 }
 
@@ -93,11 +117,13 @@ const wsConnectApi = async (url, notify) => new Promise((resolve, reject) => {
 
 export async function getLogInCookie(notify) {
   while (true) {
+    await sleep(1000);
+    fetchCookie = makeFetchCookie(fetch);
     try {
-      const fetchCookie = makeFetchCookie(fetch);
       await fetchCookie('https://eqn.hsc.gov.ua/api/v2/oauth/govid', {
         method: 'GET',
         redirect: 'follow',
+        headers,
       });
       await fetchCookie('https://id.gov.ua/bankid-nbu-auth');
       const formData = new FormData();
@@ -106,11 +132,15 @@ export async function getLogInCookie(notify) {
         method: 'POST',
         redirect: 'manual',
         body: formData,
+        headers,
+      }).catch((err) => {
+        throw err;
       });
       const location = res1.headers.get('location');
       const res2 = await fetchCookie(location, {
         method: 'GET',
         redirect: 'manual',
+        headers,
       });
       const finalLocation = res2.headers.get('location');
       const url = new URL(finalLocation);
@@ -118,6 +148,7 @@ export async function getLogInCookie(notify) {
       const res4 = await fetchCookie(redirectUri, {
         method: 'GET',
         redirect: 'follow',
+        headers,
       });
       const html = await res4.text();
       const csrfToken = extractCsrfToken(html);
@@ -130,6 +161,7 @@ export async function getLogInCookie(notify) {
         method: 'POST',
         redirect: 'follow',
         body: formData2,
+        headers,
       });
       return fetchCookie.cookieJar.getCookieString('https://eqn.hsc.gov.ua');
     } catch (err) {

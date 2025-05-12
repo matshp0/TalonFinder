@@ -1,5 +1,5 @@
-import { getAvailableDates, getAvailableOffices, getLogInCookie } from './requests.js';
 import sleep from '../utils/sleep.js';
+import { getAvailableDates, getAvailableOffices, getLogInCookie } from './requests.js';
 import models from '../database/models.js';
 import { OFFICE_STATUSES } from './config.js';
 import { ExpiredException } from './exceptions.js';
@@ -17,9 +17,11 @@ class Scraper {
     const cookie = await this.#getCookie();
     const { data } = await getAvailableDates(questionId);
     const dates = data.map(({ date }) => date.slice(0, 10));
-    const update = dates.map(async (date) => getAvailableOffices(questionId, date, cookie)
-      .then((res) => res.map(({ srvCenterId }) => srvCenterId))
-      .then((officeIds) => this.#updateStatus(questionId, officeIds, date))
+    const update = dates.map(async (date) => getAvailableOffices(questionId, date, 3, cookie)
+      .then((res) => {
+        if (res.data.length) return this.#updateStatus(questionId, [3]);
+        else return this.#updateStatus(questionId, [], date);
+      })
       .then(() => console.log(`Fetched data successfuly for date: ${date}`))
       .catch((err) => {
         console.log(err);
@@ -82,10 +84,13 @@ class Scraper {
 
       try {
         await Promise.all(settledArr);
-      } catch {
+      } catch (err) {
+        console.log(err);
         const cookie = await getLogInCookie(this.adminNotify);
+        console.log(cookie);
         await this.#setCookie(cookie);
       }
+      await sleep(300000);
     }
   }
 
