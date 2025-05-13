@@ -90,7 +90,7 @@ class Scraper {
         console.log(cookie);
         await this.#setCookie(cookie);
       }
-      await sleep(300000);
+      await sleep(process.env.QUERY_TIMEOUT);
     }
   }
 
