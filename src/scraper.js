@@ -19,7 +19,7 @@ class Scraper {
     const dates = data.map(({ date }) => date.slice(0, 10));
     const update = dates.map(async (date) => getAvailableOffices(questionId, date, 3, cookie)
       .then((res) => {
-        if (res.data.length) return this.#updateStatus(questionId, [3]);
+        if (res.data.length) return this.#updateStatus(questionId, [3], date);
         else return this.#updateStatus(questionId, [], date);
       })
       .then(() => console.log(`Fetched data successfuly for date: ${date}`))
